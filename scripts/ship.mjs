@@ -101,7 +101,8 @@ async function main() {
   }
 
   const prodFlag = preview ? "" : " --prod";
-  run(vcl + " deploy" + prodFlag + " --yes", { cwd: PKG_DIR });
+  // Deploy from monorepo root so network-definitions / viem-chain are included.
+  run(vcl + " deploy" + prodFlag + " --yes", { cwd: ROOT });
 
   console.log("");
   console.log("  Ship complete!");

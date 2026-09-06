@@ -1,5 +1,6 @@
 import { execFileSync } from "node:child_process";
 import { randomUUID } from "node:crypto";
+import { createRequire } from "node:module";
 import {
   accessSync,
   chmodSync,
@@ -214,9 +215,17 @@ export async function migrateCreditDatabase(config: CreditMigrationConfig): Prom
   const prismaConfigPath = fileURLToPath(
     new URL("../../prisma.config.ts", import.meta.url),
   );
-  const prismaCliPath = fileURLToPath(
+  // Monorepo root hoist vs package-local install (Vercel / npm workspaces).
+  const prismaCliCandidates = [
     new URL("../../../../node_modules/prisma/build/index.js", import.meta.url),
-  );
+    new URL("../../../node_modules/prisma/build/index.js", import.meta.url),
+  ].map(fileURLToPath);
+  const prismaCliPath = prismaCliCandidates.find(candidate => existsSync(candidate));
+  if (!prismaCliPath) {
+    throw new Error(
+      `Prisma CLI not found. Tried: ${prismaCliCandidates.join(", ")}`,
+    );
+  }
 
   ensureCreditDatabaseFiles(config.databasePath);
   execFileSync(

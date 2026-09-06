@@ -20,6 +20,7 @@ const nextConfig = {
     "better-sqlite3",
     "@prisma/adapter-better-sqlite3",
     "@prisma/client",
+    "prisma",
   ],
   // Silence "multiple lockfiles" / wrong workspace root when developing inside a nested monorepo.
   outputFileTracingRoot: projectRoot,
