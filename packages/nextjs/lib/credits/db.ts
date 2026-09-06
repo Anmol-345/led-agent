@@ -215,17 +215,10 @@ export async function migrateCreditDatabase(config: CreditMigrationConfig): Prom
   const prismaConfigPath = fileURLToPath(
     new URL("../../prisma.config.ts", import.meta.url),
   );
-  // Monorepo root hoist vs package-local install (Vercel / npm workspaces).
-  const prismaCliCandidates = [
-    new URL("../../../../node_modules/prisma/build/index.js", import.meta.url),
-    new URL("../../../node_modules/prisma/build/index.js", import.meta.url),
-  ].map(fileURLToPath);
-  const prismaCliPath = prismaCliCandidates.find(candidate => existsSync(candidate));
-  if (!prismaCliPath) {
-    throw new Error(
-      `Prisma CLI not found. Tried: ${prismaCliCandidates.join(", ")}`,
-    );
-  }
+  // Resolve via Node module resolution so Next/webpack does not try to bundle a
+  // relative node_modules/prisma path at build time (breaks on Vercel).
+  const require = createRequire(import.meta.url);
+  const prismaCliPath = require.resolve("prisma/build/index.js");
 
   ensureCreditDatabaseFiles(config.databasePath);
   execFileSync(
