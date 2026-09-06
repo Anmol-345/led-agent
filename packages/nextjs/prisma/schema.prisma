@@ -1,0 +1,384 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../lib/credits/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model CreditChallenge {
+  id            String               @id
+  nonce         String               @unique
+  messageHash   String               @map("message_hash")
+  wallet        String
+  action        CreditAction
+  requestId     String               @map("request_id")
+  expiresAt     DateTime             @map("expires_at")
+  consumedAt    DateTime?            @map("consumed_at")
+  createdAt     DateTime             @default(now()) @map("created_at")
+  session       CreditSession?
+  authorization CreditAuthorization?
+
+  @@map("credit_challenges")
+}
+
+model CreditSession {
+  id          String          @id
+  secretHash  String          @unique @map("secret_hash")
+  challengeId String          @unique @map("challenge_id")
+  challenge   CreditChallenge @relation(fields: [challengeId], references: [id], onDelete: Restrict)
+  wallet      String
+  action      CreditAction
+  requestId   String          @map("request_id")
+  expiresAt   DateTime        @map("expires_at")
+  revokedAt   DateTime?       @map("revoked_at")
+
+  @@map("credit_sessions")
+}
+
+model CreditAuthorization {
+  id                       String                    @id
+  challengeId              String?                   @unique @map("challenge_id")
+  challenge                CreditChallenge?          @relation(fields: [challengeId], references: [id], onDelete: Restrict)
+  correlationId            String                    @unique @map("correlation_id")
+  reservationId            String                    @unique @map("reservation_id")
+  reservationSignature     String?                   @map("reservation_signature")
+  wallet                   String
+  serviceType              CreditServiceType         @map("service_type")
+  priceVersion             String                    @map("price_version")
+  priceZeroGMicroUsdc      BigInt                    @map("price_0g_micro_usdc")
+  priceFmpMicroUsdc        BigInt                    @map("price_fmp_micro_usdc")
+  priceLegServiceMicroUsdc BigInt                    @map("price_leg_service_micro_usdc")
+  maximumChargeMicroUsdc   BigInt                    @map("maximum_charge_micro_usdc")
+  chargePurpose            String                    @map("charge_purpose")
+  expiresAt                DateTime                  @map("expires_at")
+  status                   CreditAuthorizationStatus
+  rejectionReason          String?                   @map("rejection_reason")
+  vaultTransactionHash     String?                   @map("vault_transaction_hash")
+  createdAt                DateTime                  @default(now()) @map("created_at")
+  updatedAt                DateTime                  @updatedAt @map("updated_at")
+  usageRecord              CreditUsageRecord?
+
+  @@map("credit_authorizations")
+}
+
+model CreditUsageRecord {
+  id                      String                  @id
+  authorizationId         String                  @unique @map("authorization_id")
+  authorization           CreditAuthorization     @relation(fields: [authorizationId], references: [id], onDelete: Restrict)
+  status                  CreditUsageStatus
+  zeroGMicroUsdc          BigInt                  @map("zero_g_micro_usdc")
+  fmpMicroUsdc            BigInt                  @map("fmp_micro_usdc")
+  legServiceMicroUsdc     BigInt                  @map("leg_service_micro_usdc")
+  totalMicroUsdc          BigInt                  @map("total_micro_usdc")
+  customerChargeMicroUsdc BigInt                  @map("customer_charge_micro_usdc")
+  providerReferenceHash   String                  @map("provider_reference_hash")
+  createdAt               DateTime                @map("created_at")
+  corrections             CreditUsageCorrection[]
+
+  @@map("credit_usage_records")
+}
+
+model CreditUsageCorrection {
+  id                  String            @id
+  usageRecordId       String            @map("usage_record_id")
+  usageRecord         CreditUsageRecord @relation(fields: [usageRecordId], references: [id], onDelete: Restrict)
+  reason              String
+  zeroGMicroUsdc      BigInt            @map("zero_g_micro_usdc")
+  fmpMicroUsdc        BigInt            @map("fmp_micro_usdc")
+  legServiceMicroUsdc BigInt            @map("leg_service_micro_usdc")
+  totalMicroUsdc      BigInt            @map("total_micro_usdc")
+  createdAt           DateTime          @map("created_at")
+
+  @@map("credit_usage_corrections")
+}
+
+model CreditChainEvent {
+  chainId         BigInt              @map("chain_id")
+  transactionHash String              @map("transaction_hash")
+  logIndex        BigInt              @map("log_index")
+  blockNumber     BigInt              @map("block_number")
+  blockHash       String              @map("block_hash")
+  eventName       String              @map("event_name")
+  wallet          String
+  amountMicroUsdc BigInt              @map("amount_micro_usdc")
+  finality        CreditEventFinality
+  reason          String?
+  observedAt      DateTime            @map("observed_at")
+
+  @@id([chainId, transactionHash, logIndex])
+  @@map("credit_chain_events")
+}
+
+model CreditIndexerState {
+  id                Int      @id
+  chainId           BigInt?  @map("chain_id")
+  vaultAddress      String?  @map("vault_address")
+  deploymentBlock   BigInt?  @map("deployment_block")
+  cursorBlockNumber BigInt   @map("cursor_block_number")
+  cursorBlockHash   String?  @map("cursor_block_hash")
+  updatedAt         DateTime @map("updated_at")
+
+  @@map("credit_indexer_state")
+}
+
+enum CreditAction {
+  READ_ACCOUNT               @map("read-account")
+  AUTHORIZE_ADVISOR          @map("authorize-advisor")
+  AUTHORIZE_TRADING_PLATFORM @map("authorize-trading-platform")
+}
+
+enum CreditServiceType {
+  ADVISOR          @map("advisor")
+  TRADING_PLATFORM @map("trading-platform")
+}
+
+enum CreditAuthorizationStatus {
+  PENDING     @map("pending")
+  RESERVED    @map("reserved")
+  PROVISIONAL @map("provisional")
+  SETTLED     @map("settled")
+  RELEASED    @map("released")
+  FAILED      @map("failed")
+  EXPIRED     @map("expired")
+  REJECTED    @map("rejected")
+}
+
+enum CreditUsageStatus {
+  PROVISIONAL @map("provisional")
+  SETTLED     @map("settled")
+  RELEASED    @map("released")
+  FAILED      @map("failed")
+}
+
+enum CreditEventFinality {
+  PENDING   @map("pending")
+  CONFIRMED @map("confirmed")
+  REVERSED  @map("reversed")
+}
+
+// ---------------------------------------------------------------------------
+// Value-Investing Advisor
+//
+// Advisor-owned tables share the persistent host database named by
+// CREDIT_DATABASE_PATH but are never written by credit code and never write
+// credit tables. They store no raw prompt, wallet signature, provider key, or
+// raw FMP payload.
+// ---------------------------------------------------------------------------
+
+model AdvisorQuote {
+  id                       String               @id
+  correlationId            String               @unique @map("correlation_id")
+  wallet                   String
+  source                   AdvisorRequestSource
+  contextHash              String               @map("context_hash")
+  philosophyVersion        String               @map("philosophy_version")
+  routerModel              String               @map("router_model")
+  priceVersion             String               @map("price_version")
+  price0gMicroUsdc         BigInt               @map("price_0g_micro_usdc")
+  priceFmpMicroUsdc        BigInt               @map("price_fmp_micro_usdc")
+  priceLegServiceMicroUsdc BigInt               @map("price_leg_service_micro_usdc")
+  maximumChargeMicroUsdc   BigInt               @map("maximum_charge_micro_usdc")
+  promptTokenBudget        Int                  @map("prompt_token_budget")
+  completionTokenAllowance Int                  @map("completion_token_allowance")
+  expiresAt                DateTime             @map("expires_at")
+  createdAt                DateTime             @default(now()) @map("created_at")
+  run                      AdvisorRun?
+
+  @@index([wallet, createdAt])
+  @@map("advisor_quotes")
+}
+
+model AdvisorRun {
+  id                String                 @id
+  quoteId           String                 @unique @map("quote_id")
+  quote             AdvisorQuote           @relation(fields: [quoteId], references: [id], onDelete: Restrict)
+  correlationId     String                 @unique @map("correlation_id")
+  wallet            String
+  source            AdvisorRequestSource
+  status            AdvisorRunStatus
+  failureCode       String?                @map("failure_code")
+  philosophyVersion String                 @map("philosophy_version")
+  routerModel       String                 @map("router_model")
+  priceVersion      String                 @map("price_version")
+  promptTokens      Int?                   @map("prompt_tokens")
+  completionTokens  Int?                   @map("completion_tokens")
+  startedAt         DateTime               @map("started_at")
+  completedAt       DateTime?              @map("completed_at")
+  citations         AdvisorCitation[]
+  calculations      AdvisorCalculation[]
+  recommendation    AdvisorRecommendation?
+  checkup           AdvisorCheckup?
+
+  @@index([wallet, startedAt])
+  @@map("advisor_runs")
+}
+
+model AdvisorCitation {
+  id          String     @id
+  runId       String     @map("run_id")
+  run         AdvisorRun @relation(fields: [runId], references: [id], onDelete: Restrict)
+  source      String
+  symbol      String
+  periodLabel String?    @map("period_label")
+  observedAt  DateTime   @map("observed_at")
+  retrievedAt DateTime   @map("retrieved_at")
+
+  @@index([runId])
+  @@map("advisor_citations")
+}
+
+model AdvisorCalculation {
+  id                String     @id
+  runId             String     @map("run_id")
+  run               AdvisorRun @relation(fields: [runId], references: [id], onDelete: Restrict)
+  method            String
+  formulaVersion    String     @map("formula_version")
+  inputsJson        String     @map("inputs_json")
+  resultDecimal     String?    @map("result_decimal")
+  unavailableReason String?    @map("unavailable_reason")
+  citationIdsJson   String     @map("citation_ids_json")
+  createdAt         DateTime   @map("created_at")
+
+  @@index([runId])
+  @@map("advisor_calculations")
+}
+
+model AdvisorRecommendation {
+  id                     String                      @id
+  runId                  String                      @unique @map("run_id")
+  run                    AdvisorRun                  @relation(fields: [runId], references: [id], onDelete: Restrict)
+  wallet                 String
+  artifactVersion        String                      @map("artifact_version")
+  assetChainId           BigInt                      @map("asset_chain_id")
+  assetAddress           String                      @map("asset_address")
+  assetSymbol            String?                     @map("asset_symbol")
+  stance                 AdvisorRecommendationStance
+  thesis                 String
+  risks                  String
+  evidenceJson           String                      @map("evidence_json")
+  calculationIdsJson     String                      @map("calculation_ids_json")
+  generatedAt            DateTime                    @map("generated_at")
+  expiresAt              DateTime                    @map("expires_at")
+
+  @@index([wallet, expiresAt])
+  @@map("advisor_recommendations")
+}
+
+model AdvisorCheckupSubscription {
+  id        String                     @id
+  wallet    String
+  cadence   AdvisorCheckupCadence
+  state     AdvisorSubscriptionState
+  nextDueAt DateTime                   @map("next_due_at")
+  createdAt DateTime                   @map("created_at")
+  updatedAt DateTime                   @map("updated_at")
+  assets    AdvisorCheckupAsset[]
+  checkups  AdvisorCheckup[]
+
+  @@index([wallet, state])
+  @@map("advisor_checkup_subscriptions")
+}
+
+model AdvisorCheckupAsset {
+  id             String                     @id
+  subscriptionId String                     @map("subscription_id")
+  subscription   AdvisorCheckupSubscription @relation(fields: [subscriptionId], references: [id], onDelete: Restrict)
+  chainId        BigInt                     @map("chain_id")
+  tokenAddress   String                     @map("token_address")
+
+  @@unique([subscriptionId, chainId, tokenAddress])
+  @@map("advisor_checkup_assets")
+}
+
+model AdvisorCheckup {
+  id             String                     @id
+  subscriptionId String                     @map("subscription_id")
+  subscription   AdvisorCheckupSubscription @relation(fields: [subscriptionId], references: [id], onDelete: Restrict)
+  wallet         String
+  state          AdvisorCheckupState
+  dueAt          DateTime                   @map("due_at")
+  runId          String?                    @unique @map("run_id")
+  run            AdvisorRun?                @relation(fields: [runId], references: [id], onDelete: Restrict)
+  createdAt      DateTime                   @map("created_at")
+  resolvedAt     DateTime?                  @map("resolved_at")
+
+  @@unique([wallet, subscriptionId, dueAt])
+  @@index([state, dueAt])
+  @@map("advisor_checkups")
+}
+
+model AdvisorOauthClient {
+  id                      String              @id
+  clientName              String              @map("client_name")
+  redirectUrisJson        String              @map("redirect_uris_json")
+  grantTypesJson          String              @map("grant_types_json")
+  tokenEndpointAuthMethod String              @map("token_endpoint_auth_method")
+  clientSecretHash        String?             @map("client_secret_hash")
+  createdAt               DateTime            @map("created_at")
+  tokens                  AdvisorOauthToken[]
+
+  @@map("advisor_oauth_clients")
+}
+
+model AdvisorOauthToken {
+  id            String                @id
+  clientId      String                @map("client_id")
+  client        AdvisorOauthClient    @relation(fields: [clientId], references: [id], onDelete: Restrict)
+  tokenHash     String                @unique @map("token_hash")
+  kind          AdvisorOauthTokenKind
+  wallet        String
+  scope         String
+  redirectUri   String?               @map("redirect_uri")
+  codeChallenge String?               @map("code_challenge")
+  expiresAt     DateTime              @map("expires_at")
+  revokedAt     DateTime?             @map("revoked_at")
+  createdAt     DateTime              @map("created_at")
+
+  @@index([clientId, wallet])
+  @@map("advisor_oauth_tokens")
+}
+
+enum AdvisorRequestSource {
+  WEB       @map("web")
+  CONNECTOR @map("connector")
+  CHECKUP   @map("checkup")
+}
+
+enum AdvisorRunStatus {
+  RUNNING   @map("running")
+  COMPLETED @map("completed")
+  FAILED    @map("failed")
+}
+
+enum AdvisorRecommendationStance {
+  RESEARCH_ONLY      @map("research-only")
+  UNDERVALUED        @map("undervalued")
+  FAIRLY_VALUED      @map("fairly-valued")
+  OVERVALUED         @map("overvalued")
+  INSUFFICIENT_BASIS @map("insufficient-basis")
+}
+
+enum AdvisorCheckupCadence {
+  WEEKLY    @map("weekly")
+  MONTHLY   @map("monthly")
+  QUARTERLY @map("quarterly")
+}
+
+enum AdvisorSubscriptionState {
+  ACTIVE @map("active")
+  PAUSED @map("paused")
+}
+
+enum AdvisorCheckupState {
+  PENDING   @map("pending")
+  COMPLETED @map("completed")
+  SKIPPED   @map("skipped")
+}
+
+enum AdvisorOauthTokenKind {
+  AUTHORIZATION_CODE @map("authorization-code")
+  ACCESS             @map("access")
+  REFRESH            @map("refresh")
+}

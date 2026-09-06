@@ -1,0 +1,52 @@
+version: '3.8'
+
+# The app targets real chains now (NEXT_PUBLIC_DEPLOY_TARGET=mainnet|testnet), so the
+# Base-forked Anvil node and its chain-init deploy step are gone. Deploy the vault with
+# `just deploy base` or `just deploy sepolia` and set CREDIT_VAULT_ADDRESS accordingly.
+
+services:
+  # 1. Next.js Application Server
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: leg-agent-app
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - NEXT_PUBLIC_DEPLOY_TARGET=${NEXT_PUBLIC_DEPLOY_TARGET:?set mainnet or testnet}
+      - CREDIT_BASE_RPC_URL=${CREDIT_BASE_RPC_URL:?vault chain RPC is required}
+      - CREDIT_APP_ORIGIN=${CREDIT_APP_ORIGIN:-https://leg-agent.lybre.xyz}
+      - CREDIT_DATABASE_PATH=/app/packages/nextjs/prisma/data/credits.db
+      - CREDIT_CONFIRMATIONS=${CREDIT_CONFIRMATIONS:-2}
+      - CREDIT_DEPLOYMENT_BLOCK=${CREDIT_DEPLOYMENT_BLOCK:?deployment block is required}
+      # No defaults for the vault address or the billing key: a placeholder here silently
+      # produced a non-functional deployment that still looked healthy.
+      - CREDIT_VAULT_ADDRESS=${CREDIT_VAULT_ADDRESS:?vault address is required}
+      - CREDIT_USDC_ADDRESS=${CREDIT_USDC_ADDRESS:-}
+      - CREDIT_BILLING_SIGNER_PRIVATE_KEY=${CREDIT_BILLING_SIGNER_PRIVATE_KEY:?billing signer key is required}
+      - CREDIT_SCHEDULER_SECRET=${CREDIT_SCHEDULER_SECRET:?scheduler secret is required}
+      - FMP_PRODUCTION_LICENSE_CONFIRMED=${FMP_PRODUCTION_LICENSE_CONFIRMED:-true}
+      - UNISWAP_API_KEY=${UNISWAP_API_KEY:-}
+      - USE_UNISWAP_API=${USE_UNISWAP_API:-true}
+      - ADVISOR_ROUTER_API_KEY=${ADVISOR_ROUTER_API_KEY:-}
+      - ADVISOR_ROUTER_MODEL=${ADVISOR_ROUTER_MODEL:-}
+    volumes:
+      - sqlite-data:/app/packages/nextjs/prisma/data
+    restart: unless-stopped
+
+  # 2. Cloudflare Tunnel Connector
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: leg-agent-cloudflared
+    restart: unless-stopped
+    command: tunnel --no-autoupdate run
+    environment:
+      - TUNNEL_TOKEN=${CLOUDFLARE_TUNNEL_TOKEN}
+    depends_on:
+      - app
+
+volumes:
+  sqlite-data:

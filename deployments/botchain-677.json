@@ -1,0 +1,26 @@
+{
+  "chainId": 677,
+  "network": "BOT Chain Mainnet",
+  "rpc": "https://rpc.botchain.ai",
+  "explorer": "https://scan.botchain.ai",
+  "deployedAt": "2026-09-05T15:42:17.5519423+05:30",
+  "deployer": "0xfcf2c03840e8f0FA9aa0202935106737511Fa27d",
+  "contracts": {
+    "AgentWallet": {
+      "address": "0x91587Cb9021c76f5F3a20F17CED9266662ee6437",
+      "txHash": "0x7656950e290173a0b9251bf64a9280877d5132e672d94579a2bb95f944bbfb81",
+      "verified": false
+    },
+    "BotchainCreditUSDC": {
+      "address": "0x85dB0D47015C7b4f144773B8395869f866d94FBa",
+      "txHash": "0x1dced6cb1bd292472a6a3cb7bee4567f78fca8febd301cbdf377c78539719023",
+      "verified": false
+    },
+    "CustomerCreditVault": {
+      "address": "0xd4b0a312274996cc20b32ab0f5c9f1a5a2f9745a",
+      "txHash": "0x348c9b01f55dece352feae99109be0814d347e1679da6e6bd579c3766be6d84f",
+      "constructorArgs": ["0x85dB0D47015C7b4f144773B8395869f866d94FBa", "0xfcf2c03840e8f0FA9aa0202935106737511Fa27d", "0xfcf2c03840e8f0FA9aa0202935106737511Fa27d", "0xfcf2c03840e8f0FA9aa0202935106737511Fa27d"],
+      "verified": false
+    }
+  }
+}

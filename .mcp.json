@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "subgraph": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@graphprotocol/subgraph-mcp@latest"
+      ]
+    }
+  }
+}

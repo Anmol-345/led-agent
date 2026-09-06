@@ -1,0 +1,14 @@
+# Cursor / AI: do not load these paths into LLM context (secrets & keys)
+.env
+.env.*
+!.env.example
+!.env.sample
+.env.local
+.env.secrets.encrypted
+.env.secrets
+private-keys/
+**/*.pem
+**/*.p12
+**/id_rsa
+**/id_rsa.*
+**/*.key

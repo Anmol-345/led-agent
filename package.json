@@ -1,0 +1,24 @@
+{
+  "name": "leg-agent",
+  "version": "0.1.0",
+  "private": true,
+  "license": "MIT",
+  "type": "module",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {},
+  "devDependencies": {
+    "viem": "^2.21.0",
+    "qrcode-terminal": "^0.12.0",
+    "agent0-sdk": "^1.7.1",
+    "tsx": "^4.19.0",
+    "dotenv": "^16.4.0",
+    "@ampersend_ai/ampersend-sdk": "0.0.14",
+    "@x402/fetch": "^2.18.0",
+    "@x402/core": "^2.18.0",
+    "@x402/svm": "^2.18.0",
+    "@x402/evm": "^2.18.0",
+    "@x402/extensions": "^2.18.0"
+  }
+}
