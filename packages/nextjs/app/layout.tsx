@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { Providers } from "./providers";
 import { Header } from "@/components/Header";
+import { Footer } from "@/components/Footer";
 import { WrongNetworkBanner } from "@/components/WrongNetworkBanner";
 
 export const metadata: Metadata = {
@@ -28,6 +29,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <div id="site-main" className="flex flex-1 flex-col min-h-0">
             {children}
           </div>
+          <Footer />
           </div>
         </Providers>
       </body>

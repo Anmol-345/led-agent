@@ -28,4 +28,5 @@ data/
 packages/foundry/cache/
 packages/foundry/out/
 .cursor/
+desktop.ini
 
