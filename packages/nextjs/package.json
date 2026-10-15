@@ -3,11 +3,11 @@
   "version": "0.1.0",
   "private": true,
   "engines": {
-    "node": "24.11.x"
+    "node": ">=20.0.0"
   },
   "scripts": {
     "credits:backup": "tsx scripts/backup-credits.mts",
-    "credits:generate": "PRISMA_CREDIT_GENERATE=true prisma generate --config prisma.config.ts",
+    "credits:generate": "prisma generate --config prisma.config.ts",
     "credits:migrate": "tsx scripts/migrate-credits.mts",
     "credits:restore": "tsx scripts/restore-credits.mts",
     "dev": "next dev --turbo",

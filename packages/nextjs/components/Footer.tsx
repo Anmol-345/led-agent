@@ -166,7 +166,7 @@ export function Footer() {
               <li>
                 <a
                   id="footer-link-vault-contract"
-                  href="https://scan.botchain.ai/address/0xd4b0a312274996Cc20b32AB0F5c9f1a5a2f9745a"
+                  href="https://scan.botchain.ai/address/0x33F96427BfE3ec9Db7424DB99759373D5cC9eDf8"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-zinc-400 hover:text-[#a3e635] transition-colors flex items-center gap-1.5"

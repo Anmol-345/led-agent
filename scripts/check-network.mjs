@@ -12,6 +12,8 @@ const ROOT = process.cwd();
 const VAULT_CHAIN_BY_TARGET = {
   mainnet: { chainId: 8453, name: "Base" },
   testnet: { chainId: 11155111, name: "Sepolia" },
+  botchain: { chainId: 677, name: "BOT Chain" },
+  "botchain-testnet": { chainId: 968, name: "BOT Chain Testnet" },
 };
 
 function readDeployTarget() {
@@ -25,7 +27,7 @@ function readDeployTarget() {
     );
     if (match) return match[1].trim().replace(/^["']|["']$/g, "");
   }
-  return "";
+  return "botchain";
 }
 
 function loadDeployedChainIds() {

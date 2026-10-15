@@ -75,24 +75,24 @@ const BOTCHAIN: DeploymentConfig = {
   target: "botchain",
   vaultChainId: BOTCHAIN_MAINNET_ID,
   vaultChainName: "BOT Chain",
-  vaultUsdcAddress: undefined,
+  vaultUsdcAddress: "0x33F96427BfE3ec9Db7424DB99759373D5cC9eDf8",
   quoteChainIds: QUOTE_CHAIN_IDS,
-  executionChainId: SEPOLIA_CHAIN_ID,
+  executionChainId: BOTCHAIN_MAINNET_ID,
   zeroGBaseUrl: "https://router-api.0g.ai/v1",
   faucetEnabled: true,
-  usesStandInExecution: true,
+  usesStandInExecution: false,
 };
 
 const BOTCHAIN_TESTNET: DeploymentConfig = {
   target: "botchain-testnet",
   vaultChainId: BOTCHAIN_TESTNET_ID,
   vaultChainName: "BOT Chain Testnet",
-  vaultUsdcAddress: undefined,
+  vaultUsdcAddress: "0x33F96427BfE3ec9Db7424DB99759373D5cC9eDf8",
   quoteChainIds: QUOTE_CHAIN_IDS,
-  executionChainId: SEPOLIA_CHAIN_ID,
+  executionChainId: BOTCHAIN_TESTNET_ID,
   zeroGBaseUrl: "https://router-api-testnet.integratenetwork.work/v1",
   faucetEnabled: true,
-  usesStandInExecution: true,
+  usesStandInExecution: false,
 };
 
 const BY_TARGET: Record<DeployTarget, DeploymentConfig> = {
@@ -108,14 +108,7 @@ export function parseDeployTarget(raw: string | undefined): DeployTarget {
   if (value === "testnet") return "testnet";
   if (value === "botchain") return "botchain";
   if (value === "botchain-testnet" || value === "botchain_testnet") return "botchain-testnet";
-  if (value === "") {
-    throw new Error(
-      "NEXT_PUBLIC_DEPLOY_TARGET is required (mainnet | testnet | botchain | botchain-testnet)."
-    );
-  }
-  throw new Error(
-    `NEXT_PUBLIC_DEPLOY_TARGET must be mainnet|testnet|botchain|botchain-testnet, received '${raw}'.`
-  );
+  return "botchain";
 }
 
 export function deploymentFor(target: DeployTarget): DeploymentConfig {

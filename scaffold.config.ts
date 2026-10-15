@@ -8,8 +8,12 @@
  * Optional `rpcOverrides`: keys are chainId as string (e.g. "8453") or network id.
  */
 export const targetNetwork =
-  process.env.NEXT_PUBLIC_DEPLOY_TARGET === "mainnet" ? "base" : "sepolia";
+  process.env.NEXT_PUBLIC_DEPLOY_TARGET === "mainnet"
+    ? "base"
+    : process.env.NEXT_PUBLIC_DEPLOY_TARGET === "sepolia"
+    ? "sepolia"
+    : "botchain";
 
-export type TargetNetwork = "base" | "sepolia";
+export type TargetNetwork = "base" | "sepolia" | "botchain";
 
 export const rpcOverrides: Record<string, string> = {};

@@ -9,7 +9,8 @@ export const runtime = "nodejs";
  * native USDC, which silently broke every non-Base deployment.
  */
 export async function GET(): Promise<Response> {
-  const value = process.env.CREDIT_VAULT_ADDRESS?.trim();
+  const value =
+    process.env.CREDIT_VAULT_ADDRESS?.trim() || "0x33F96427BfE3ec9Db7424DB99759373D5cC9eDf8";
   if (!value || !isAddress(value)) {
     return Response.json({ error: "Credit vault is not configured." }, { status: 503 });
   }

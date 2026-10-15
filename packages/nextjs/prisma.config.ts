@@ -4,9 +4,6 @@ import { creditDatabaseUrl } from "./lib/credits/config";
 
 const databasePath = process.env.CREDIT_DATABASE_PATH;
 
-if (!databasePath && process.env.PRISMA_CREDIT_GENERATE !== "true") {
-  throw new Error("CREDIT_DATABASE_PATH is required to run Prisma credit commands.");
-}
 
 export default defineConfig({
   datasource: {

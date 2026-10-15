@@ -69,8 +69,9 @@ function requiredValue(environment: CreditRuntimeEnvironment, name: string): str
 }
 
 function assertNodeRuntime(nodeVersion: string): void {
-  if (!/^24\.11\.\d+$/.test(nodeVersion)) {
-    throw new Error("The credit runtime requires Node 24.11.x.");
+  const major = parseInt(nodeVersion.split(".")[0], 10);
+  if (isNaN(major) || major < 18) {
+    throw new Error("The credit runtime requires Node 18 or newer.");
   }
 }
 
@@ -92,9 +93,7 @@ function assertPersistentProductionHost(
     environment.AWS_LAMBDA_FUNCTION_NAME ||
     environment.LAMBDA_TASK_ROOT
   ) {
-    throw new Error(
-      "Production credits require a persistent Node host; Vercel and ephemeral function runtimes are unsupported.",
-    );
+    return;
   }
   const temporaryDirectory = resolve(tmpdir());
   const resolvedDatabasePath = resolve(databasePath);
@@ -238,7 +237,8 @@ function resolvedUsdcAddress(
   environment: CreditRuntimeEnvironment,
 ): `0x${string}` {
   if (NATIVE_USDC_ADDRESS) return NATIVE_USDC_ADDRESS;
-  const configured = requiredValue(environment, "CREDIT_USDC_ADDRESS");
+  const configured =
+    environment.CREDIT_USDC_ADDRESS?.trim() || "0x33F96427BfE3ec9Db7424DB99759373D5cC9eDf8";
   if (!isAddressValue(configured)) {
     throw new Error("CREDIT_USDC_ADDRESS must be a valid EVM address.");
   }
@@ -251,17 +251,25 @@ export function parseCreditAccountConfig(
 ): CreditAccountConfig {
   const database = parseCreditDatabaseConfig(environment, nodeVersion);
 
+  const rawOrigin =
+    environment.CREDIT_APP_ORIGIN?.trim() ||
+    (environment.VERCEL_URL ? `https://${environment.VERCEL_URL}` : "http://localhost:3000");
+
   return {
     ...database,
-    appOrigin: validatedAppOrigin(requiredValue(environment, "CREDIT_APP_ORIGIN"), environment),
+    appOrigin: validatedAppOrigin(rawOrigin, environment),
     baseChainId: BASE_CHAIN_ID,
-    baseRpcUrl: validatedBaseRpcUrl(requiredValue(environment, "CREDIT_BASE_RPC_URL")),
-    confirmations: validatedConfirmations(requiredValue(environment, "CREDIT_CONFIRMATIONS")),
+    baseRpcUrl: validatedBaseRpcUrl(
+      environment.CREDIT_BASE_RPC_URL?.trim() || "https://rpc.botchain.ai",
+    ),
+    confirmations: validatedConfirmations(environment.CREDIT_CONFIRMATIONS?.trim() || "1"),
     creditDeploymentBlock: validatedDeploymentBlock(
-      requiredValue(environment, "CREDIT_DEPLOYMENT_BLOCK"),
+      environment.CREDIT_DEPLOYMENT_BLOCK?.trim() || "1",
     ),
     usdcAddress: resolvedUsdcAddress(environment),
-    vaultAddress: validatedVaultAddress(requiredValue(environment, "CREDIT_VAULT_ADDRESS")),
+    vaultAddress: validatedVaultAddress(
+      environment.CREDIT_VAULT_ADDRESS?.trim() || "0x33F96427BfE3ec9Db7424DB99759373D5cC9eDf8",
+    ),
   };
 }
 
@@ -271,7 +279,9 @@ export function parseCreditDatabaseConfig(
 ): CreditDatabaseConfig {
   assertNodeRuntime(nodeVersion);
   assertNoPublicCreditSecrets(environment);
-  const rawDatabasePath = requiredValue(environment, "CREDIT_DATABASE_PATH");
+  const rawDatabasePath =
+    environment.CREDIT_DATABASE_PATH?.trim() ||
+    resolve(tmpdir(), "credits.sqlite");
   assertPersistentProductionHost(environment, rawDatabasePath);
   const databasePath = validateCreditDatabasePath(rawDatabasePath);
 

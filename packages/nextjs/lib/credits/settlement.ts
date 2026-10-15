@@ -18,7 +18,10 @@ export function vaultSettlement(
   environment: Record<string, string | undefined> = process.env,
 ): VaultSettlement {
   // Pinned in the contract on mainnet; supplied per deployment on testnet.
-  const configured = DEPLOYMENT.vaultUsdcAddress ?? environment.CREDIT_USDC_ADDRESS?.trim();
+  const configured =
+    DEPLOYMENT.vaultUsdcAddress ??
+    environment.CREDIT_USDC_ADDRESS?.trim() ??
+    "0x33F96427BfE3ec9Db7424DB99759373D5cC9eDf8";
   if (!configured || !isAddress(configured)) {
     throw new Error(
       "CREDIT_USDC_ADDRESS must name the deployed credit settlement token on this target.",

@@ -7,7 +7,8 @@ export type NetworkKey =
   | "baseSepolia"
   | "polygon"
   | "bnb"
-  | "localhost";
+  | "localhost"
+  | "botchain";
 
 export type TokenDef = {
   symbol: string;
@@ -189,6 +190,22 @@ export const NETWORKS: Record<NetworkKey, NetworkDefinition> = {
     blockExplorerUrl: "http://localhost:8545",
     agent0SubgraphUrl: "",
     tokens: [],
+  },
+  botchain: {
+    key: "botchain",
+    chainId: 677,
+    name: "BOT Chain",
+    nativeCurrency: { name: "BOT", symbol: "BOT", decimals: 18 },
+    rpcUrl: "https://rpc.botchain.ai",
+    blockExplorerUrl: "https://scan.botchain.ai",
+    agent0SubgraphUrl: "",
+    tokens: [
+      {
+        symbol: "BOT",
+        address: "0x33F96427BfE3ec9Db7424DB99759373D5cC9eDf8",
+        decimals: 18,
+      },
+    ],
   },
 };
 
